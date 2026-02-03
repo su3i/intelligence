@@ -17,8 +17,6 @@ import (
 )
 
 func main() {
-	log.Println("Got here..")
-
 	// Load environment variables
 	err := godotenv.Load()
 	if err != nil {
@@ -37,7 +35,8 @@ func main() {
 		log.Fatalf("Failed to load common config: %v", err)
 	}
 
-	database.InitializeConnection(&databaseCfg)
+	database.Initialize(&databaseCfg)
+	database.Migrate(&databaseCfg)
 
 	router := server.InitializeRouter()
 

@@ -7,14 +7,24 @@ import (
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/database/sqlite"
 )
 
-func InitializeConnection(config *config.DatabaseConfig) {
+func Initialize(config *config.DatabaseConfig) {
 	switch config.DatabaseType {
 		case domain.DatabaseTypePostgres:
 			postgres.Connect(config)
 		case domain.DatabaseTypeSqlite:
 			sqlite.Connect(config)
 		default:
-			// Use SQLite as Default
-			sqlite.Connect(config)
+			sqlite.Connect(config) // Treat SQLite as Default
+	}
+}
+
+func Migrate(config *config.DatabaseConfig) {
+	switch config.DatabaseType {
+		case domain.DatabaseTypePostgres:
+			postgres.Migrate()
+		case domain.DatabaseTypeSqlite:
+			sqlite.Migrate()
+		default:
+			sqlite.Migrate() // Treat SQLite as Default
 	}
 }
