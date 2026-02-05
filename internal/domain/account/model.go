@@ -11,4 +11,7 @@ type Account struct {
 	Email         string `gorm:"unique;not null"`
 	PasswordEnc		string
 	Role 		AccountRole `gorm:"type:text;not null"`
+
+	MFAEnabled    bool
+	MFASecret     string `gorm:"unique;not null"`
 }

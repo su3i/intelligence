@@ -24,6 +24,10 @@ func InitializeRouter() *gin.Engine {
 	router.GET("/account", handlers.RetrieveAccountByEmail)
 	router.GET("/accounts", handlers.RetrieveAccounts)
 
+	// MFA
+	router.POST("/mfa/totp-uri", handlers.RetrieveTotpURI)
+	router.POST("/mfa/confirm", handlers.ConfirmMFA)
+
 	// Metrics
 	handlers.MetricsHandler(router)
 

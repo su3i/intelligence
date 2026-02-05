@@ -43,7 +43,14 @@ func (r *accountRepository) FindOneByEmail(email string) (*account.Account, erro
 }
 
 func (r *accountRepository) Create(payload *account.Account) (*account.Account, error) {
-	_account := account.Account{Name: payload.Name, Email: payload.Email, Role: payload.Role, PasswordEnc: payload.PasswordEnc}
+	_account := account.Account{
+		Name: payload.Name, 
+		Email: payload.Email, 
+		Role: payload.Role, 
+		PasswordEnc: payload.PasswordEnc, 
+		MFAEnabled: payload.MFAEnabled, 
+		MFASecret: payload.MFASecret,
+	}
 
 	err := r.db.Create(&_account).Error
 

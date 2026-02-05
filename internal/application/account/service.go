@@ -5,6 +5,7 @@ import (
 
 	"github.com/darksuei/suei-intelligence/internal/config"
 	"github.com/darksuei/suei-intelligence/internal/domain/account"
+	"github.com/darksuei/suei-intelligence/internal/domain/mfa"
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/database"
 )
 
@@ -32,12 +33,20 @@ func NewAccount(name string, email string, password string, role account.Account
 		return nil, err
 	}
 
+	mfaSecret, err := mfa.GenerateMFASecret()
+
+	if err != nil {
+		return nil, err
+	}
+
 	// Create account
 	_account = &account.Account{
 		Name: name,
 		Email: email,
 		Role: role,
 		PasswordEnc: passwordEnc,
+		MFAEnabled: false,
+		MFASecret: mfaSecret,
 	}
 
 	return _accountRepository.Create(_account)
@@ -53,4 +62,44 @@ func RetrieveAccount(email string, cfg *config.DatabaseConfig) (*account.Account
 	_accountRepository := database.NewAccountRepository(cfg)
 
 	return _accountRepository.FindOneByEmail(email)
+}
+
+func RetrieveAccountWithPassword(email string, password string, cfg *config.DatabaseConfig) (*account.Account, error) {
+	_accountRepository := database.NewAccountRepository(cfg)
+
+	_account, err := _accountRepository.FindOneByEmail(email)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if _account == nil {
+		return nil, errors.New("Invalid account.")
+	}
+
+	err = account.VerifyPassword(_account.PasswordEnc, password)
+
+	if err != nil {
+		return nil, errors.New("Invalid password.")
+	}
+
+	return _account, nil
+}
+
+func EnableTOTP(email string, cfg *config.DatabaseConfig) error {
+	_accountRepository := database.NewAccountRepository(cfg)
+
+	_account, err := _accountRepository.FindOneByEmail(email)
+
+	if err != nil {
+		return err
+	}
+
+	if _account == nil {
+		return errors.New("Invalid account.")
+	}
+
+	_account.MFAEnabled = true
+
+	return _accountRepository.Update(_account)
 }

@@ -54,7 +54,7 @@ func NewAccount(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "success",
-		"account": _account,
+		"account": accountDomain.ToAccountDTO(_account),
 	  })
 }
 
@@ -77,7 +77,7 @@ func RetrieveAccounts(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "success",
-		"accounts": _accounts,
+		"accounts": accountDomain.ToAccountDTOs(_accounts),
 	})
 }
 
@@ -116,6 +116,6 @@ func RetrieveAccountByEmail(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "success",
-		"account": _account,
+		"account": accountDomain.ToAccountDTO(_account),
 	})
 }
