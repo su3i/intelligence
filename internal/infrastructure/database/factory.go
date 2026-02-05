@@ -4,6 +4,7 @@ import (
 	"github.com/darksuei/suei-intelligence/internal/config"
 	"github.com/darksuei/suei-intelligence/internal/domain"
 	"github.com/darksuei/suei-intelligence/internal/domain/metadata"
+	"github.com/darksuei/suei-intelligence/internal/domain/organization"
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/database/postgres"
 	postgresRepository "github.com/darksuei/suei-intelligence/internal/infrastructure/database/postgres/repositories"
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/database/sqlite"
@@ -54,5 +55,18 @@ func NewMetadataRepository(config *config.DatabaseConfig) metadata.MetadataRepos
 			return sqliteRepository.NewMetadataRepository(db)
 		default:
 			return sqliteRepository.NewMetadataRepository(db) // Treat SQLite as Default
+	}
+}
+
+func NewOrganizationRepository(config *config.DatabaseConfig) organization.OrganizationRepository {
+	db := GetDB(config)
+
+	switch config.DatabaseType {
+		case domain.DatabaseTypePostgres:
+			return postgresRepository.NewOrganizationRepository(db)
+		case domain.DatabaseTypeSqlite:
+			return sqliteRepository.NewOrganizationRepository(db)
+		default:
+			return sqliteRepository.NewOrganizationRepository(db) // Treat SQLite as Default
 	}
 }

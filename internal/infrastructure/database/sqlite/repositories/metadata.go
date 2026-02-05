@@ -8,14 +8,14 @@ import (
 	"github.com/darksuei/suei-intelligence/internal/domain/metadata"
 )
 
-var DB *gorm.DB
-
-type metadataRepository struct{}
+type metadataRepository struct{
+	db *gorm.DB
+}
 
 func (r *metadataRepository) FindOne() (*metadata.Metadata, error) {
 	var _metadata metadata.Metadata
 
-	if err := DB.Unscoped().First(&_metadata).Error; err != nil {
+	if err := r.db.Unscoped().First(&_metadata).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -28,7 +28,7 @@ func (r *metadataRepository) FindOne() (*metadata.Metadata, error) {
 func (r *metadataRepository) Create(payload *metadata.Metadata) (*metadata.Metadata, error) {
 	_metadata := metadata.Metadata{BootstrapToken: payload.BootstrapToken}
 
-	err := DB.Create(&_metadata).Error
+	err := r.db.Create(&_metadata).Error
 
 	if err != nil {
 		return nil, errors.New("failed to create metadata: " + err.Error())
@@ -38,7 +38,7 @@ func (r *metadataRepository) Create(payload *metadata.Metadata) (*metadata.Metad
 }
 
 func (r *metadataRepository) Update(payload *metadata.Metadata) error {
-	err := DB.Updates(payload).Error
+	err := r.db.Updates(payload).Error
 
 	if err != nil {
 		return errors.New("failed to update metadata: " + err.Error())
@@ -47,7 +47,6 @@ func (r *metadataRepository) Update(payload *metadata.Metadata) error {
 	return nil
 }
 
-func NewMetadataRepository(_db *gorm.DB) metadata.MetadataRepository {
-	DB = _db
-	return &metadataRepository{}
+func NewMetadataRepository(db *gorm.DB) metadata.MetadataRepository {
+	return &metadataRepository{db: db}
 }

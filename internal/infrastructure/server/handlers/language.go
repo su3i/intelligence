@@ -23,8 +23,6 @@ func SupportedLanguages(c *gin.Context) {
 }
 
 func SetLanguagePreference(c *gin.Context) {
-	log.Print("Received language setup request..")
-
 	// Parse the request body
 	var req struct {
 		Code string `json:"code" binding:"required"`
@@ -67,7 +65,7 @@ func SetLanguagePreference(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusAccepted, gin.H{
 		"message": "Language updated successfully",
 		"code":    req.Code,
 	})
