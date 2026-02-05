@@ -29,7 +29,7 @@ func SetLanguagePreference(c *gin.Context) {
 	}
 
 	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
 			"error": "Invalid request: code is required",
 		})
 		return

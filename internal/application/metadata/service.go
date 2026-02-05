@@ -8,8 +8,6 @@ import (
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/database"
 )
 
-type metadataService struct{}
-
 // Check if bootstrap token exists in database
 // If it does not, create it
 // If it does, validate it

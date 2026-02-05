@@ -3,6 +3,7 @@ package database
 import (
 	"github.com/darksuei/suei-intelligence/internal/config"
 	"github.com/darksuei/suei-intelligence/internal/domain"
+	"github.com/darksuei/suei-intelligence/internal/domain/account"
 	"github.com/darksuei/suei-intelligence/internal/domain/metadata"
 	"github.com/darksuei/suei-intelligence/internal/domain/organization"
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/database/postgres"
@@ -68,5 +69,18 @@ func NewOrganizationRepository(config *config.DatabaseConfig) organization.Organ
 			return sqliteRepository.NewOrganizationRepository(db)
 		default:
 			return sqliteRepository.NewOrganizationRepository(db) // Treat SQLite as Default
+	}
+}
+
+func NewAccountRepository(config *config.DatabaseConfig) account.AccountRepository {
+	db := GetDB(config)
+
+	switch config.DatabaseType {
+		case domain.DatabaseTypePostgres:
+			return postgresRepository.NewAccountRepository(db)
+		case domain.DatabaseTypeSqlite:
+			return sqliteRepository.NewAccountRepository(db)
+		default:
+			return sqliteRepository.NewAccountRepository(db) // Treat SQLite as Default
 	}
 }

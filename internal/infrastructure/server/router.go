@@ -19,6 +19,11 @@ func InitializeRouter() *gin.Engine {
 	router.POST("/organization", handlers.NewOrganization)
 	router.GET("/organization/:key", handlers.RetrieveOrganization)
 
+	// Account
+	router.POST("/account", handlers.NewAccount)
+	router.GET("/account", handlers.RetrieveAccountByEmail)
+	router.GET("/accounts", handlers.RetrieveAccounts)
+
 	// Metrics
 	handlers.MetricsHandler(router)
 

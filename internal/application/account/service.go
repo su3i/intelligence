@@ -1,0 +1,56 @@
+package account
+
+import (
+	"errors"
+
+	"github.com/darksuei/suei-intelligence/internal/config"
+	"github.com/darksuei/suei-intelligence/internal/domain/account"
+	"github.com/darksuei/suei-intelligence/internal/infrastructure/database"
+)
+
+func NewAccount(name string, email string, password string, role account.AccountRole, cfg *config.DatabaseConfig) (*account.Account, error) {
+	_accountRepository := database.NewAccountRepository(cfg)
+
+	// Check if email already exists - Fail fast
+	_account, err := _accountRepository.FindOneByEmail(email)
+	
+	if err != nil || _account != nil {
+		return nil, errors.New("Email already registered.")
+	}
+
+	// Check password against password requirements
+	err = account.CheckPassword(password)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Encrypt password
+	passwordEnc, err := account.EncryptPassword(password)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Create account
+	_account = &account.Account{
+		Name: name,
+		Email: email,
+		Role: role,
+		PasswordEnc: passwordEnc,
+	}
+
+	return _accountRepository.Create(_account)
+}
+
+func RetrieveAccounts(cfg *config.DatabaseConfig) (*[]account.Account, error) {
+	_accountRepository := database.NewAccountRepository(cfg)
+
+	return _accountRepository.Find()
+}
+
+func RetrieveAccount(email string, cfg *config.DatabaseConfig) (*account.Account, error) {
+	_accountRepository := database.NewAccountRepository(cfg)
+
+	return _accountRepository.FindOneByEmail(email)
+}
