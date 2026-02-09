@@ -1,6 +1,6 @@
 package authentication
 
 type LoginDTO struct {
-	AccessToken string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	AccessToken string `json:"AccessToken"`
+	RefreshToken string `json:"RefreshToken"`
 }

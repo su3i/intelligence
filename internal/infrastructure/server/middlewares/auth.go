@@ -51,9 +51,15 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		roles, _ := claims["roles"].([]interface{}) // can be empty
+		email, ok := claims["email"]
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing email claim"})
+			return
+		}
+
 		c.Set("userID", userID)
-		c.Set("roles", roles)
+		c.Set("email", email)
+		c.Set("roles", claims["roles"].([]interface{})) // can be empty
 		
 		c.Next()
 	}

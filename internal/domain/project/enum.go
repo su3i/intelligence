@@ -18,5 +18,6 @@ const (
 type ProjectBusinessDomain string
 
 const (
-	Marketplace ProjectBusinessDomain = "MARKETPLACE"
+	Ecommerce ProjectBusinessDomain = "ECOMMERCE"
+	Insurance ProjectBusinessDomain = "INSURANCE"
 )

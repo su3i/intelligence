@@ -1,13 +1,13 @@
 package account
 
 type AccountDTO struct {
-	ID         uint       `json:"id"`
-	Name       string     `json:"name"`
-	Email      string     `json:"email"`
-	Role       AccountRole `json:"role"`
-	MFAEnabled bool       `json:"mfa_enabled"`
-	CreatedAt  string	  `json:"created_at"`
-	UpdatedAt  string	  `json:"updated_at"`
+	ID         uint       `json:"ID"`
+	Name       string     `json:"Name"`
+	Email      string     `json:"Email"`
+	Role       AccountRole `json:"Role"`
+	MFAEnabled bool       `json:"MFAEnabled"`
+	CreatedAt  string	  `json:"CreatedAt"`
+	UpdatedAt  string	  `json:"UpdatedAt"`
 }
 
 func ToAccountDTO(acc *Account) *AccountDTO {

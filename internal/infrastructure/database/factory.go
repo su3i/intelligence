@@ -6,6 +6,7 @@ import (
 	"github.com/darksuei/suei-intelligence/internal/domain/account"
 	"github.com/darksuei/suei-intelligence/internal/domain/metadata"
 	"github.com/darksuei/suei-intelligence/internal/domain/organization"
+	"github.com/darksuei/suei-intelligence/internal/domain/project"
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/database/postgres"
 	postgresRepository "github.com/darksuei/suei-intelligence/internal/infrastructure/database/postgres/repositories"
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/database/sqlite"
@@ -82,5 +83,18 @@ func NewAccountRepository(config *config.DatabaseConfig) account.AccountReposito
 			return sqliteRepository.NewAccountRepository(db)
 		default:
 			return sqliteRepository.NewAccountRepository(db) // Treat SQLite as Default
+	}
+}
+
+func NewProjectRepository(config *config.DatabaseConfig) project.ProjectRepository {
+	db := GetDB(config)
+
+	switch config.DatabaseType {
+		case domain.DatabaseTypePostgres:
+			return postgresRepository.NewProjectRepository(db)
+		case domain.DatabaseTypeSqlite:
+			return sqliteRepository.NewProjectRepository(db)
+		default:
+			return sqliteRepository.NewProjectRepository(db) // Treat SQLite as Default
 	}
 }
