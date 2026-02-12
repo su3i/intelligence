@@ -104,3 +104,29 @@ func EnableTOTP(email string, cfg *config.DatabaseConfig) error {
 
 	return _accountRepository.Update(_account)
 }
+
+func UpdateAccount(oldEmail string, name *string, email *string, cfg *config.DatabaseConfig) (*account.Account, error) {
+	_accountRepository := database.NewAccountRepository(cfg)
+
+	// Check if email doesnt exist - Fail fast
+	_account, err := _accountRepository.FindOneByEmail(oldEmail)
+	
+	if err != nil || _account == nil {
+		return nil, errors.New("Inavlid account.")
+	}
+
+	if name != nil {
+		_account.Name = *name
+	}
+
+	if email != nil {
+		_account.Email = *email
+	}
+
+	// Save updated account
+	if err := _accountRepository.Update(_account); err != nil {
+		return nil, err
+	}
+
+	return _account, nil
+}

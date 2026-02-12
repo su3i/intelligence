@@ -7,12 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kelseyhightower/envconfig"
 
-	authorizationService "github.com/darksuei/suei-intelligence/internal/application/authorization"
 	organizationService "github.com/darksuei/suei-intelligence/internal/application/organization"
 	"github.com/darksuei/suei-intelligence/internal/config"
-	authorizationDomain "github.com/darksuei/suei-intelligence/internal/domain/authorization"
-	organizationDomain "github.com/darksuei/suei-intelligence/internal/domain/organization"
-	"github.com/darksuei/suei-intelligence/internal/infrastructure/server/utils"
 )
 
 func NewOrganization(c *gin.Context) {
@@ -35,7 +31,7 @@ func NewOrganization(c *gin.Context) {
 	}
 
 	// Create organization
-	_organization, err := organizationService.NewOrganization(req.Name, "default", organizationDomain.OrgScope(req.Scope), &databaseCfg)
+	_organization, err := organizationService.NewOrganization(req.Name, "default", req.Scope, &databaseCfg)
 
 	if err != nil {
 		log.Printf("Error creating organization: %v", err)
@@ -59,16 +55,6 @@ func RetrieveOrganization(c *gin.Context) {
 	
 	key := "default" // Default organization key
 
-	// Authorization
-	allow, err := authorizationService.EnforceRoles(utils.GetUserRolesFromContext(c), "org", authorizationDomain.Organization, "read")
-
-	if err != nil || !allow {
-		c.JSON(http.StatusForbidden, gin.H{
-			"error": "forbidden",
-		})
-		return
-	}
-
 	// Retrieve organization
 	_organization, err := organizationService.RetrieveOrganization(key, &databaseCfg)
 
@@ -91,4 +77,42 @@ func RetrieveOrganization(c *gin.Context) {
 		"message": "success",
 		"organization": _organization,
 	})
+	return
+}
+
+func UpdateOrganization (c *gin.Context) {
+	// Parse the request body
+	var req struct {
+		Name string `json:"name,omitempty"`
+		Scope string `json:"scope,omitempty"`
+	}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": "Invalid request: Missing required fields.",
+		})
+		return
+	}
+
+	var databaseCfg config.DatabaseConfig
+	if err := envconfig.Process("", &databaseCfg); err != nil {
+		log.Fatalf("Failed to load database config: %v", err)
+	}
+
+	// Update organization
+	_organization, err := organizationService.UpdateOrganization(&req.Name, "default", &req.Scope, &databaseCfg)
+
+	if err != nil {
+		log.Printf("Error updating organization: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "success",
+		"organization": _organization,
+	})
+	return
 }

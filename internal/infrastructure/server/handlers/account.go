@@ -137,3 +137,45 @@ func RetrieveAccountByEmail(c *gin.Context) {
 		"account": accountDomain.ToAccountDTO(_account),
 	})
 }
+
+func UpdateAccount(c *gin.Context) {
+	email := c.Query("email")
+	if email == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Missing required query parameter: email",
+		})
+		return
+	}
+
+	var req struct {
+		Name  string `json:"name,omitempty"`
+		Email string `json:"email,omitempty"`
+	}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": "Invalid request: Missing required fields.",
+		})
+		return
+	}
+
+	var databaseCfg config.DatabaseConfig
+	if err := envconfig.Process("", &databaseCfg); err != nil {
+		log.Fatalf("Failed to load database config: %v", err)
+	}
+
+	_account, err := accountService.UpdateAccount(email, &req.Name, &req.Email, &databaseCfg)
+
+	if err != nil {
+		log.Printf("Error updating account: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"account": _account,
+	})
+}

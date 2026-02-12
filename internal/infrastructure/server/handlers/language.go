@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
@@ -12,7 +13,7 @@ import (
 )
 
 var Languages = []map[string]string{
-	{"name": "English", "code": "EN"},
+	{"name": "English", "code": "EN", "default": "true"},
 	{"name": "دری", "code": "AF"},
 }
 
@@ -69,4 +70,36 @@ func SetLanguagePreference(c *gin.Context) {
 		"message": "Language updated successfully",
 		"code":    req.Code,
 	})
+}
+
+func RetrieveLanguagePreference(c *gin.Context) {
+	var databaseCfg config.DatabaseConfig
+	if err := envconfig.Process("", &databaseCfg); err != nil {
+		log.Fatalf("Failed to load database config: %v", err)
+	}
+
+	language, err := metadata.RetrieveLanguage(&databaseCfg)
+
+	if err != nil || *language == "" {
+		// Return the default language
+		for _, lang := range Languages {
+			if lang["default"] == "true" {
+				c.JSON(http.StatusOK, gin.H{
+					"message": "success",
+					"language": lang["code"],
+				})
+				return
+			}
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"error": errors.New("Failed to get language preference"),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"language": language,
+	})
+	return
 }

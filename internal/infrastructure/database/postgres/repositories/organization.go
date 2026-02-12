@@ -41,6 +41,16 @@ func (r *organizationRepository) Create(payload *organization.Organization) (*or
 	return &_organization, nil
 }
 
+func (r *organizationRepository) Update(payload *organization.Organization) error {
+	err := r.db.Updates(payload).Error
+
+	if err != nil {
+		return errors.New("failed to update organization: " + err.Error())
+	}
+
+	return nil
+}
+
 func NewOrganizationRepository(db *gorm.DB) organization.OrganizationRepository {
 	return &organizationRepository{db: db}
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/database"
 )
 
-func NewOrganization(name string, key string, scope organization.OrgScope, cfg *config.DatabaseConfig) (*organization.Organization, error) {
+func NewOrganization(name string, key string, scope string, cfg *config.DatabaseConfig) (*organization.Organization, error) {
 	_organizationRepository := database.NewOrganizationRepository(cfg)
 
 	_organization, err := _organizationRepository.FindOne(key)
@@ -24,7 +24,7 @@ func NewOrganization(name string, key string, scope organization.OrgScope, cfg *
 	_organization = &organization.Organization{
 		Name:  name,
 		Key:   key,
-		Scope: scope,
+		Scope: organization.OrgScope(scope),
 	}
 
 	return _organizationRepository.Create(_organization)
@@ -34,4 +34,29 @@ func RetrieveOrganization(key string, cfg *config.DatabaseConfig) (*organization
 	_organizationRepository := database.NewOrganizationRepository(cfg)
 
 	return _organizationRepository.FindOne(key)
+}
+
+func UpdateOrganization (name *string, key string, scope *string, cfg *config.DatabaseConfig) (*organization.Organization, error) {
+	_organizationRepository := database.NewOrganizationRepository(cfg)
+
+	_organization, err := _organizationRepository.FindOne(key)
+
+	if err != nil || _organization == nil {
+		return nil, errors.New("Failed to get organization.")
+	}
+
+	if name != nil {
+		_organization.Name = *name
+	}
+
+	if scope != nil {
+		_organization.Scope = organization.OrgScope(*scope)
+	}
+
+	// Save updated project
+	if err := _organizationRepository.Update(_organization); err != nil {
+		return nil, err
+	}
+
+	return _organization, nil
 }

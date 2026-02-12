@@ -3,11 +3,21 @@ package server
 import (
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/server/handlers"
 	middleware "github.com/darksuei/suei-intelligence/internal/infrastructure/server/middlewares"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func InitializeRouter() *gin.Engine {
 	router := gin.Default()
+
+	// Cors Settings
+	router.Use(cors.New(cors.Config{
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"*"},
+		ExposeHeaders:    []string{"*"},
+		AllowCredentials: false,
+	}))
 
 	// Health
 	router.GET("/health", handlers.Health)
@@ -15,14 +25,17 @@ func InitializeRouter() *gin.Engine {
 	// Language Settings
 	router.GET("/supported-languages", handlers.SupportedLanguages)
 	router.PUT("/set-language", handlers.SetLanguagePreference)
+	router.GET("/get-language", handlers.RetrieveLanguagePreference)
 
 	// Organization
 	router.POST("/organization", handlers.NewOrganization)
-	router.GET("/organization", middleware.AuthMiddleware(), handlers.RetrieveOrganization)
+	router.PUT("/organization", handlers.UpdateOrganization)
+	router.GET("/organization", handlers.RetrieveOrganization)
 
 	// Account
 	router.POST("/account", handlers.NewAccount)
 	router.GET("/account", handlers.RetrieveAccountByEmail)
+	router.PUT("/account", handlers.UpdateAccount)
 	router.GET("/accounts", middleware.AuthMiddleware(), handlers.RetrieveAccounts)
 
 	// MFA

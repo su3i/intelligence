@@ -54,3 +54,15 @@ func SetLanguage(language string, cfg *config.DatabaseConfig) error {
 
 	return _metadataRepository.Update(_metadata)
 }
+
+func RetrieveLanguage(cfg *config.DatabaseConfig) (*string, error) {
+	_metadataRepository := database.NewMetadataRepository(cfg)
+
+	_metadata, err := _metadataRepository.FindOne();
+
+	if err != nil || _metadata == nil {
+		return nil, err
+	}
+
+	return &_metadata.Language, nil
+}
