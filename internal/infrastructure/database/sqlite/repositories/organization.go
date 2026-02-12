@@ -30,7 +30,7 @@ func (r *organizationRepository) FindOne(key string) (*organization.Organization
 }
 
 func (r *organizationRepository) Create(payload *organization.Organization) (*organization.Organization, error) {
-	_organization := organization.Organization{Name: payload.Name, Scope: payload.Scope}
+	_organization := organization.Organization{Name: payload.Name, Key: payload.Key, Scope: payload.Scope}
 
 	err := r.db.Create(&_organization).Error
 
