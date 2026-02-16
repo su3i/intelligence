@@ -11,7 +11,6 @@ import (
 	projectDomain "github.com/darksuei/suei-intelligence/internal/domain/project"
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/server/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/kelseyhightower/envconfig"
 )
 
 func NewProject(c *gin.Context) {
@@ -29,11 +28,6 @@ func NewProject(c *gin.Context) {
 			"errors": utils.FormatValidationErrors(err),
 		})
 		return
-	}
-
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
 	}
 
 	createdByEmail, err := utils.GetUserEmailFromContext(c)
@@ -56,7 +50,7 @@ func NewProject(c *gin.Context) {
 	}
 
 	// Create project
-	_project, err := project.NewProject(req.Name, req.Key, projectDomain.ProjectStage(req.Stage), projectDomain.ProjectBusinessDomain(req.BusinessDomain), *createdByEmail, &databaseCfg)
+	_project, err := project.NewProject(req.Name, req.Key, projectDomain.ProjectStage(req.Stage), projectDomain.ProjectBusinessDomain(req.BusinessDomain), *createdByEmail, config.Database())
 
 	if err != nil {
 		log.Printf("Error creating project: %v", err)
@@ -73,11 +67,6 @@ func NewProject(c *gin.Context) {
 }
 
 func RetrieveProject(c *gin.Context) {
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-	
 	key := c.Param("key") // assumes route is like /projects/:key
 	if key == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -97,7 +86,7 @@ func RetrieveProject(c *gin.Context) {
 	}
 
 	// Retrieve project
-	_project, err := project.RetrieveProject(key, &databaseCfg)
+	_project, err := project.RetrieveProject(key, config.Database())
 
 	if err != nil {
 		log.Printf("Error retrieving project: %v", err)
@@ -121,11 +110,6 @@ func RetrieveProject(c *gin.Context) {
 }
 
 func RetrieveProjects(c *gin.Context) {
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
 	allow, err := authorizationService.EnforceRoles(utils.GetUserRolesFromContext(c), "org", authorizationDomain.Organization, "read")
 
 	if err != nil || !allow {
@@ -136,7 +120,7 @@ func RetrieveProjects(c *gin.Context) {
 	}
 
 	// Retrieve projects
-	_projects, err := project.RetrieveProjects(&databaseCfg)
+	_projects, err := project.RetrieveProjects(config.Database())
 
 	if err != nil {
 		log.Printf("Error retrieving projects: %v", err)
@@ -174,18 +158,13 @@ func UpdateProject(c *gin.Context) {
         return
     }
 
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
     updatedProject, err := project.UpdateProject(
         key,
         req.Name,
 		req.Key,
         req.Stage,
         req.BusinessDomain,
-        &databaseCfg,
+        config.Database(),
     )
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

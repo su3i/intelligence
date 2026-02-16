@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -11,7 +10,6 @@ import (
 	"github.com/darksuei/suei-intelligence/internal/config"
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/server/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/kelseyhightower/envconfig"
 )
 
 func RetrieveTotpURI(c *gin.Context) {
@@ -29,13 +27,8 @@ func RetrieveTotpURI(c *gin.Context) {
 		return
 	}
 
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
 	// Retrieve account
-	_account, err := accountService.RetrieveAccountWithPassword(req.Email, req.Password, &databaseCfg)
+	_account, err := accountService.RetrieveAccountWithPassword(req.Email, req.Password, config.Database())
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -85,13 +78,8 @@ func ConfirmMFA(c *gin.Context) {
 		return
 	}
 
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
 	// Retrieve account
-	_account, err := accountService.RetrieveAccountWithPassword(req.Email, req.Password, &databaseCfg)
+	_account, err := accountService.RetrieveAccountWithPassword(req.Email, req.Password, config.Database())
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -125,7 +113,7 @@ func ConfirmMFA(c *gin.Context) {
 		return
 	}
 
-	accountService.EnableTOTP(req.Email, &databaseCfg)
+	accountService.EnableTOTP(req.Email, config.Database())
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "success",

@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kelseyhightower/envconfig"
 
 	organizationService "github.com/darksuei/suei-intelligence/internal/application/organization"
 	"github.com/darksuei/suei-intelligence/internal/config"
@@ -27,13 +26,8 @@ func NewOrganization(c *gin.Context) {
 		return
 	}
 
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
 	// Create organization
-	_organization, err := organizationService.NewOrganization(req.Name, "default", req.Scope, &databaseCfg)
+	_organization, err := organizationService.NewOrganization(req.Name, "default", req.Scope, config.Database())
 
 	if err != nil {
 		log.Printf("Error creating organization: %v", err)
@@ -50,15 +44,10 @@ func NewOrganization(c *gin.Context) {
 }
 
 func RetrieveOrganization(c *gin.Context) {
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-	
 	key := "default" // Default organization key
 
 	// Retrieve organization
-	_organization, err := organizationService.RetrieveOrganization(key, &databaseCfg)
+	_organization, err := organizationService.RetrieveOrganization(key, config.Database())
 
 	if err != nil {
 		log.Printf("Error retrieving organization: %v", err)
@@ -97,13 +86,8 @@ func UpdateOrganization (c *gin.Context) {
 		return
 	}
 
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
 	// Update organization
-	_organization, err := organizationService.UpdateOrganization(&req.Name, "default", &req.Scope, &databaseCfg)
+	_organization, err := organizationService.UpdateOrganization(&req.Name, "default", &req.Scope, config.Database())
 
 	if err != nil {
 		log.Printf("Error updating organization: %v", err)

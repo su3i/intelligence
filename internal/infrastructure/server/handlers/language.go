@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kelseyhightower/envconfig"
 
 	"github.com/darksuei/suei-intelligence/internal/application/metadata"
 	"github.com/darksuei/suei-intelligence/internal/config"
@@ -56,13 +55,8 @@ func SetLanguagePreference(c *gin.Context) {
 		return
 	}
 
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
 	// Update metadata with the language
-	if err := metadata.SetLanguage(req.Code, &databaseCfg); err != nil {
+	if err := metadata.SetLanguage(req.Code, config.Database()); err != nil {
 		log.Printf("Error updating language: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to update language",
@@ -77,12 +71,7 @@ func SetLanguagePreference(c *gin.Context) {
 }
 
 func RetrieveLanguagePreference(c *gin.Context) {
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
-	language, err := metadata.RetrieveLanguage(&databaseCfg)
+	language, err := metadata.RetrieveLanguage(config.Database())
 
 	if err != nil || *language == "" {
 		// Return the default language

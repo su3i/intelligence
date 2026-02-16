@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -17,7 +16,6 @@ import (
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/kelseyhightower/envconfig"
 )
 
 func Login(c *gin.Context) {
@@ -35,17 +33,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	var commonCfg config.CommonConfig
-	if err := envconfig.Process("", &commonCfg); err != nil {
-		log.Fatalf("Failed to load common config: %v", err)
-	}
-
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
-	_account, err := account.RetrieveAccountWithPassword(req.Email, req.Password, &databaseCfg)
+	_account, err := account.RetrieveAccountWithPassword(req.Email, req.Password, config.Database())
 
 	if err != nil || _account == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -76,7 +64,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	auth, err := authentication.Login(req.Email, req.Password, &commonCfg, &databaseCfg)
+	auth, err := authentication.Login(req.Email, req.Password, config.Common(), config.Database())
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -119,18 +107,8 @@ func MFA(c *gin.Context) {
 		return
 	}
 
-	var commonCfg config.CommonConfig
-	if err := envconfig.Process("", &commonCfg); err != nil {
-		log.Fatalf("Failed to load common config: %v", err)
-	}
-
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
 	// Retrieve account
-	_account, err := accountService.RetrieveAccount(email, &databaseCfg)
+	_account, err := accountService.RetrieveAccount(email, config.Database())
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -168,7 +146,7 @@ func MFA(c *gin.Context) {
 		_ = cache.GetCache().Delete(challengeKey)
 	}()
 
-	auth, err := authentication.LoginWithoutPassword(email, &commonCfg, &databaseCfg)
+	auth, err := authentication.LoginWithoutPassword(email, config.Common(), config.Database())
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -226,17 +204,7 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	var commonCfg config.CommonConfig
-	if err := envconfig.Process("", &commonCfg); err != nil {
-		log.Fatalf("Failed to load common config: %v", err)
-	}
-
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
-	authTokens, err := authentication.Refresh(req.RefreshToken, &commonCfg, &databaseCfg)
+	authTokens, err := authentication.Refresh(req.RefreshToken, config.Common(), config.Database())
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "invalid or expired refresh token",

@@ -13,7 +13,6 @@ import (
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/etl"
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/server/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/kelseyhightower/envconfig"
 )
 
 func SupportedDatasources(c *gin.Context) {
@@ -71,11 +70,6 @@ func NewDatasource(c *gin.Context) {
 		return
 	}
 
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
 	var _datasource *datasourceDomain.Datasource
 	var datasourceID uint
 
@@ -89,7 +83,7 @@ func NewDatasource(c *gin.Context) {
 	}
 
 	// Create datasource
-	_datasource, err = datasourceService.NewDatasource(key, req.SourceType, *createdByEmail, &databaseCfg)
+	_datasource, err = datasourceService.NewDatasource(key, req.SourceType, *createdByEmail, config.Database())
 
 	datasourceID = _datasource.ID
 
@@ -108,7 +102,7 @@ func NewDatasource(c *gin.Context) {
 
 	if err != nil {
 		// Rollback CREATED Datasource
-		datasourceService.HardDeleteDatasource(uint(datasourceID), key, &databaseCfg)
+		datasourceService.HardDeleteDatasource(uint(datasourceID), key, config.Database())
 
 		log.Printf("Error creating datasource: %v", err)
 
@@ -134,11 +128,6 @@ func RetrieveDatasources(c *gin.Context) {
 		return
 	}
 
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
 	// Authorization
 	allow, err := authorizationService.EnforceRoles(utils.GetUserRolesFromContext(c), "org", authorizationDomain.Organization, "read")
 
@@ -150,7 +139,7 @@ func RetrieveDatasources(c *gin.Context) {
 	}
 
 	// Retrieve datasources
-	_datasources, err := datasourceService.RetrieveDatasources(key, &databaseCfg)
+	_datasources, err := datasourceService.RetrieveDatasources(key, config.Database())
 
 	if err != nil {
 		log.Printf("Error retrieving datasources: %v", err)
@@ -191,11 +180,6 @@ func DeleteDatasource(c *gin.Context) {
 		return
 	}
 
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
 	// Authorization
 	allow, err := authorizationService.EnforceRoles(utils.GetUserRolesFromContext(c), "org", authorizationDomain.Organization, "write")
 
@@ -207,7 +191,7 @@ func DeleteDatasource(c *gin.Context) {
 	}
 
 	// Delete datasource
-	err = datasourceService.SoftDeleteDatasource(uint(datasourceID), key, &databaseCfg)
+	err = datasourceService.SoftDeleteDatasource(uint(datasourceID), key, config.Database())
 
 	if err != nil {
 		log.Printf("Error deleting datasource: %v", err)

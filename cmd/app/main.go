@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/kelseyhightower/envconfig"
 
 	"github.com/darksuei/suei-intelligence/internal/application/authorization"
 	"github.com/darksuei/suei-intelligence/internal/application/metadata"
@@ -26,45 +25,32 @@ func main() {
 		log.Printf("Failed to load env: %v", err)
 	}
 
-	var commonCfg config.CommonConfig
-	err = envconfig.Process("", &commonCfg)
-	if err != nil {
-		log.Fatalf("Failed to load common config: %v", err)
-	}
-
-	var casbinCfg config.CasbinConfig
-	err = envconfig.Process("", &casbinCfg)
-	if err != nil {
-		log.Fatalf("Failed to load casbin config: %v", err)
-	}
-
-	var databaseCfg config.DatabaseConfig
-	err = envconfig.Process("", &databaseCfg)
-	if err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
+	// Load config
+	config.Initialize()
 
 	// Initialize database
-	database.Initialize(&databaseCfg)
+	database.Initialize(config.Database())
 
 	// Run database migrations
-	database.Migrate(&databaseCfg)
+	database.Migrate(config.Database())
 
 	// Load bootstrap token
-	metadata.LoadBootstrapToken(commonCfg.BootstrapToken, &databaseCfg)
+	metadata.LoadBootstrapToken(config.Common().BootstrapToken, config.Database())
 
 	// Initialize authorization module
-	authorization.Initialize(&casbinCfg)
+	authorization.Initialize(config.Casbin())
 
+	// Initialize router
 	router := server.InitializeRouter()
 
+	// Setup http server
 	httpServer := &http.Server{
-		Addr:    ":" + commonCfg.AppPort,
+		Addr:    ":" + config.Common().AppPort,
 		Handler: router,
 	}
 
 	go func() {
-		log.Printf("Application is running on port: %s", commonCfg.AppPort)
+		log.Printf("Application is running on port: %s", config.Common().AppPort)
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Application startup failed: %s", err)
 		}

@@ -1,14 +1,12 @@
 package cache
 
 import (
-	"log"
 	"sync"
 
 	"github.com/darksuei/suei-intelligence/internal/config"
 	domain "github.com/darksuei/suei-intelligence/internal/domain/cache"
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/cache/memory"
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/cache/redis"
-	"github.com/kelseyhightower/envconfig"
 )
 
 var (
@@ -18,15 +16,11 @@ var (
 
 // GetCache returns a singleton cache instance
 func GetCache() domain.Cache {
-	var cfg config.CacheConfig
-	if err := envconfig.Process("", &cfg); err != nil {
-		log.Fatalf("Failed to load cache config: %v", err)
-	}
 
 	once.Do(func() {
-		switch cfg.CacheType {
+		switch config.Cache().CacheType {
 			case domain.CacheTypeRedis:
-				instance = redis.NewCache(&cfg)
+				instance = redis.NewCache(config.Cache())
 			case domain.CacheTypeMemory:
 				instance = memory.NewCache()
 			default:

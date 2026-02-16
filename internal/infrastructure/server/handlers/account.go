@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kelseyhightower/envconfig"
 
 	accountService "github.com/darksuei/suei-intelligence/internal/application/account"
 	authorizationService "github.com/darksuei/suei-intelligence/internal/application/authorization"
@@ -32,11 +31,6 @@ func NewAccount(c *gin.Context) {
 		return
 	}
 
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
 	role, err := accountDomain.NewAccountRole(req.Role)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{
@@ -52,7 +46,7 @@ func NewAccount(c *gin.Context) {
 	}
 
 	// Create account
-	_account, err := accountService.NewAccount(req.Name, req.Email, req.Password, role, internalRoleJson, &databaseCfg)
+	_account, err := accountService.NewAccount(req.Name, req.Email, req.Password, role, internalRoleJson, config.Database())
 
 	if err != nil {
 		log.Printf("Error creating account: %v", err)
@@ -69,11 +63,6 @@ func NewAccount(c *gin.Context) {
 }
 
 func RetrieveAccounts(c *gin.Context) {
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
 	allow, err := authorizationService.EnforceRoles(utils.GetUserRolesFromContext(c), "org", authorizationDomain.Organization, "read")
 
 	if err != nil || !allow {
@@ -84,7 +73,7 @@ func RetrieveAccounts(c *gin.Context) {
 	}
 
 	// Retrieve accounts
-	_accounts, err := accountService.RetrieveAccounts(&databaseCfg)
+	_accounts, err := accountService.RetrieveAccounts(config.Database())
 
 	if err != nil {
 		log.Printf("Error retrieving account: %v", err)
@@ -101,11 +90,6 @@ func RetrieveAccounts(c *gin.Context) {
 }
 
 func RetrieveAccountByEmail(c *gin.Context) {
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
 	// Get email from query params
 	email := c.Query("email")
 	if email == "" {
@@ -116,7 +100,7 @@ func RetrieveAccountByEmail(c *gin.Context) {
 	}
 
 	// Retrieve account
-	_account, err := accountService.RetrieveAccount(email, &databaseCfg)
+	_account, err := accountService.RetrieveAccount(email, config.Database())
 
 	if err != nil {
 		log.Printf("Error retrieving account: %v", err)
@@ -162,12 +146,7 @@ func UpdateAccount(c *gin.Context) {
 		return
 	}
 
-	var databaseCfg config.DatabaseConfig
-	if err := envconfig.Process("", &databaseCfg); err != nil {
-		log.Fatalf("Failed to load database config: %v", err)
-	}
-
-	_account, err := accountService.UpdateAccount(email, &req.Name, &req.Email, &databaseCfg)
+	_account, err := accountService.UpdateAccount(email, &req.Name, &req.Email, config.Database())
 
 	if err != nil {
 		log.Printf("Error updating account: %v", err)
