@@ -17,11 +17,39 @@ import (
 )
 
 func SupportedDatasources(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"message": "success",
-		"datasources": datasourceDomain.SupportedDatasources,
+    stripped := make([]map[string]interface{}, len(datasourceDomain.SupportedDatasources))
+    for i, ds := range datasourceDomain.SupportedDatasources {
+        copy := make(map[string]interface{})
+        for k, v := range ds {
+            if k != "form" {
+                copy[k] = v
+            }
+        }
+        stripped[i] = copy
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "message":     "success",
+        "datasources": stripped,
+    })
+}
+
+func SupportedDatasource(c *gin.Context) {
+	sourceType := c.Param("sourceType")
+
+	for _, ds := range datasourceDomain.SupportedDatasources {
+		if ds["sourceType"] == sourceType {
+			c.JSON(http.StatusOK, gin.H{
+				"message":    "success",
+				"datasource": ds,
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusNotFound, gin.H{
+		"message": "datasource not found",
 	})
-	return
 }
 
 func NewDatasource(c *gin.Context) {
