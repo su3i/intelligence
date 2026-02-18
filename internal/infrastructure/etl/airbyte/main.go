@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/darksuei/suei-intelligence/internal/config"
+	"github.com/darksuei/suei-intelligence/internal/domain/etl"
 	domain "github.com/darksuei/suei-intelligence/internal/domain/etl"
 	"github.com/darksuei/suei-intelligence/internal/infrastructure/cache"
 )
@@ -219,4 +220,51 @@ func (c *AirbyteContext) TestSourceConnection(sourceId string) error {
 	log.Printf("Successfully tested source connection - %s", respBody)
 
 	return nil
+}
+
+func (c *AirbyteContext) RetrieveSourceSchemas(sourceId string) ([]etl.SourceSchema, error) {
+	token, err := retrieveAccessToken(c.cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve access token: %w", err)
+	}
+
+	url := c.cfg.AirbyteEndpoint
+	if c.cfg.AirbyteCloud {
+		url += fmt.Sprintf("/v1/streams?sourceId=%s", sourceId)
+	} else {
+		url += fmt.Sprintf("/api/public/v1/streams?sourceId=%s", sourceId)
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve source streams: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to retrieve source streams (status %d): %s", resp.StatusCode, string(respBody))
+	}
+
+	var raw []etl.AirbyteSourceStream
+	if err := json.Unmarshal(respBody, &raw); err != nil {
+		var wrapped etl.AirbyteSourceStreamsResponse
+		if err2 := json.Unmarshal(respBody, &wrapped); err2 != nil {
+			return nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+		raw = wrapped.Streams
+	}
+
+	schemas := make([]etl.SourceSchema, len(raw))
+	for i, s := range raw {
+		schemas[i] = etl.MapAirbyteStreamToSourceSchema(s)
+	}
+
+	return schemas, nil
 }

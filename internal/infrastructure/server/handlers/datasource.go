@@ -7,6 +7,7 @@ import (
 
 	authorizationService "github.com/darksuei/suei-intelligence/internal/application/authorization"
 	datasourceService "github.com/darksuei/suei-intelligence/internal/application/datasource"
+	"github.com/darksuei/suei-intelligence/internal/application/project"
 	"github.com/darksuei/suei-intelligence/internal/config"
 	authorizationDomain "github.com/darksuei/suei-intelligence/internal/domain/authorization"
 	datasourceDomain "github.com/darksuei/suei-intelligence/internal/domain/datasource"
@@ -32,6 +33,7 @@ func SupportedDatasources(c *gin.Context) {
         "message":     "success",
         "datasources": stripped,
     })
+	return
 }
 
 func SupportedDatasource(c *gin.Context) {
@@ -50,6 +52,7 @@ func SupportedDatasource(c *gin.Context) {
 	c.JSON(http.StatusNotFound, gin.H{
 		"message": "datasource not found",
 	})
+	return
 }
 
 func NewDatasource(c *gin.Context) {
@@ -70,6 +73,17 @@ func NewDatasource(c *gin.Context) {
 	if projectKey == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Project key is required",
+		})
+		return
+	}
+
+	// Retrieve project
+	_project, err := project.RetrieveProject(projectKey, config.Database())
+
+	if err != nil || _project == nil {
+		log.Printf("Error retrieving project: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to retrieve project.",
 		})
 		return
 	}
@@ -142,6 +156,10 @@ func NewDatasource(c *gin.Context) {
 
 	if err != nil {
 		log.Printf("Error creating datasource: %v", err)
+
+		// Rollback CREATED ETL source
+		etl.GetInstance().DeleteSourceConnection(*sourceId)
+
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -156,8 +174,8 @@ func NewDatasource(c *gin.Context) {
 }
 
 func RetrieveDatasources(c *gin.Context) {
-	key := c.Param("key") // assumes route is like /projects/:key
-	if key == "" {
+	projectKey := c.Param("key") // assumes route is like /projects/:key
+	if projectKey == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Project key is required",
 		})
@@ -175,7 +193,7 @@ func RetrieveDatasources(c *gin.Context) {
 	}
 
 	// Retrieve datasources
-	_datasources, err := datasourceService.RetrieveDatasources(key, config.Database())
+	_datasources, err := datasourceService.RetrieveDatasources(projectKey, config.Database())
 
 	if err != nil {
 		log.Printf("Error retrieving datasources: %v", err)
@@ -189,26 +207,27 @@ func RetrieveDatasources(c *gin.Context) {
 		"message": "success",
 		"datasources": _datasources,
 	})
+	return
 }
 
 func DeleteDatasource(c *gin.Context) {
-	key := c.Param("key") // assumes route is like /projects/:key
-	if key == "" {
+	projectKey := c.Param("key") // assumes route is like /projects/:key
+	if projectKey == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Project key is required",
 		})
 		return
 	}
 
-	idParam := c.Param("id") // /projects/:id
-	if idParam == "" {
+	datasourceIDString := c.Param("id")
+	if datasourceIDString == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Project id is required",
 		})
 		return
 	}
 
-	datasourceID, err := strconv.ParseUint(idParam, 10, 64)
+	datasourceID, err := strconv.ParseUint(datasourceIDString, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid datasource id",
@@ -227,7 +246,7 @@ func DeleteDatasource(c *gin.Context) {
 	}
 
 	// Delete datasource
-	err = datasourceService.SoftDeleteDatasource(uint(datasourceID), key, config.Database())
+	err = datasourceService.SoftDeleteDatasource(uint(datasourceID), projectKey, config.Database())
 
 	if err != nil {
 		log.Printf("Error deleting datasource: %v", err)
@@ -240,4 +259,54 @@ func DeleteDatasource(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "success",
 	})
+	return
+}
+
+func RetrieveSourceSchema(c *gin.Context) {
+	projectKey := c.Param("key") // assumes route is like /projects/:key
+	if projectKey == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Project key is required",
+		})
+		return
+	}
+
+	datasourceIDString := c.Param("id")
+	if datasourceIDString == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Project id is required",
+		})
+		return
+	}
+
+	datasourceID, err := strconv.ParseUint(datasourceIDString, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid datasource id",
+		})
+		return
+	}
+
+	// Retrieve datasource
+	_datasource, err := datasourceService.RetrieveDatasource(uint(datasourceID), projectKey, config.Database())
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid datasource id",
+		})
+		return
+	}
+
+	schemas, err := etl.GetInstance().RetrieveSourceSchemas(_datasource.SourceID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to retrieve streams",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"schema": schemas,
+	})
+	return
 }
